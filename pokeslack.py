@@ -37,30 +37,59 @@ class Pokeslack:
             logger.info('already sent this pokemon to slack with key %s', pokemon_key)
             return
 
-        from_lure = ', from a lure' if pokemon.from_lure else ''
         miles_away = pokemon.get_distance_str()
 
         position = Pokeconfig.get().position
 
-        pokedex_url = 'http://www.pokemon.com/us/pokedex/%s' % pokemon.pokemon_id
         map_url = 'http://maps.google.com?saddr=%s,%s&daddr=%s,%s&directionsmode=walking' % (position[0], position[1], pokemon.position[0], pokemon.position[1])
         time_remaining = pokemon.expires_in_str()
-        stars = ''.join([':star:' for x in xrange(pokemon.rarity)])
-        message = 'I found a <%s|%s> %s <%s|%s away> expiring in %s%s' % (pokedex_url, pokemon.name, stars, map_url, miles_away, time_remaining, from_lure)
-        # bold message if rarity > 4
-        if pokemon.rarity >= 4:
-            message = '*%s*' % message
+        rarity = ''.join([':star:' for x in xrange(pokemon.rarity)])
+        name = pokemon.name
+        distance = miles_away
+        disappear_time = time_remaining
+        unit = Pokeconfig.get().distance_unit
+        thumb_url = 'http://assets.pokemon.com/assets/cms2/img/pokedex/detail/'+str(pokemon.pokemon_id).zfill(3)+".png"
 
-        logging.info('%s: %s', pokemon_key, message)
-        if self._send(message):
+        # bold message if rarity > 4
+        # commented out, not sure if very necessary
+        #if pokemon.rarity >= 4:
+            #message = '*%s*' % message
+
+        logging.info('%s: %s', pokemon_key, name)
+        if self._send(name, distance, disappear_time, rarity, pokemon.from_lure, thumb_url, map_url):
             self.sent_pokemon[pokemon_key] = True
 
-    def _send(self, message):
+    def _send(self, name, distance, disappear_time, rarity, from_lure, thumb_url, location_url):
+        # payload = {
+        #     'username': 'Poké Alert!',
+        #     'text': message,
+        #     'icon_emoji': ':ghost:'
+        # }
+
         payload = {
-            'username': 'Poké Alert!',
-            'text': message,
-            'icon_emoji': ':ghost:'
-        }
+            "attachments" : [
+                {"thumb_url" : thumb_url, 
+                "text" : "A wild "+name+" appeared!", 
+                "fields" : [
+                    {"title" : "Distance", 
+                    "value" :  distance, 
+                    "short":1}, 
+                    {"title" : "Available for", 
+                    "value" : disappear_time,
+                    "short":1},
+                    {"title" : "Rarity",
+                    "value" : rarity,
+                    "short" :1},
+                    {"title" : "Direction", 
+                    "value" : "You can find it <"+location_url+"|here>",
+                    "short":1},
+                    {"title"  : "From Lure Module",
+                    "value" : "Yes" if from_lure else "No",
+                    "short" : 1    
+                    }
+                    ]
+                }
+            ]}
         s = json.dumps(payload)
         r = requests.post(self.slack_webhook_url, data=s)
         logger.info('slack post result: %s, %s', r.status_code, r.reason)

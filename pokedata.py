@@ -93,7 +93,7 @@ class Pokemon:
 
     def get_distance_str(self):
         if Pokeconfig.get().distance_unit == 'meters':
-            return '{:.0f} meters'.format(self.get_distance())    
+            return '{:.0f} m'.format(self.get_distance())    
         else:
             return '{:.3f} miles'.format(self.get_distance())
 
