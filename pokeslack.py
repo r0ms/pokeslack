@@ -47,25 +47,23 @@ class Pokeslack:
         name = pokemon.name
         distance = miles_away
         disappear_time = time_remaining
-        unit = Pokeconfig.get().distance_unit
         thumb_url = 'http://assets.pokemon.com/assets/cms2/img/pokedex/detail/'+str(pokemon.pokemon_id).zfill(3)+".png"
-
+        travel_int = int(travel_time)
+        if travel_int > 60 :
+            m,s = divmod(travel_time,60)
+            travel_time_str = "%dmin %02ds" % (m,s)
+        else :
+            travel_time_str = "%ds" %(travel_int)
         # bold message if rarity > 4
         # commented out, not sure if very necessary
         #if pokemon.rarity >= 4:
             #message = '*%s*' % message
 
         logging.info('%s: %s', pokemon_key, name)
-        if self._send(name, distance, disappear_time, rarity, pokemon.from_lure, thumb_url, map_url):
+        if self._send(name, distance, disappear_time, rarity, pokemon.from_lure, thumb_url, map_url, travel_time_str):
             self.sent_pokemon[pokemon_key] = True
 
-    def _send(self, name, distance, disappear_time, rarity, from_lure, thumb_url, location_url):
-        # payload = {
-        #     'username': 'Poké Alert!',
-        #     'text': message,
-        #     'icon_emoji': ':ghost:'
-        # }
-
+    def _send(self, name, distance, disappear_time, rarity, from_lure, thumb_url, location_url, travel_time):
         payload = {
             "attachments" : [
                 {"thumb_url" : thumb_url, 
@@ -85,6 +83,10 @@ class Pokeslack:
                     "short":1},
                     {"title"  : "From Lure Module",
                     "value" : "Yes" if from_lure else "No",
+                    "short" : 1    
+                    },
+                    {"title"  : "Travel time",
+                    "value" : travel_time,
                     "short" : 1    
                     }
                     ]

@@ -116,7 +116,6 @@ def parse_map(map_dict):
                     lure_expiration = datetime.utcfromtimestamp(
                         f['lure_info']['lure_expires_timestamp_ms'] / 1000.0)
                     active_pokemon_id = f['lure_info']['active_pokemon_id']
-                    # logger.debug("at fort: %s, have active pokemon_id: %s", f['lure_info']['fort_id'], active_pokemon_id)
                 else:
                     lure_expiration, active_pokemon_id = None, None
 
